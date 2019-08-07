@@ -1,0 +1,141 @@
+const fs = require("fs");
+const rimraf = require("rimraf");
+const DiskArray = require("./../index");
+
+const storagepath = `${__dirname}/tmp`;
+const inspectfile = () =>
+  JSON.parse(fs.readFileSync(`${storagepath}/data`, "utf-8"));
+
+test("DiskArray with no location", () => {
+  const arr = new DiskArray();
+  expect(arr.length).toBe(0);
+  arr.push("a", "b", "c");
+  expect(arr.length).toBe(3);
+  expect(arr[1]).toBe("b");
+  expect(arr[2]).toBe("c");
+  arr.shift();
+  expect(arr.length).toBe(2);
+  expect(arr[0]).toBe("b");
+  expect(arr[1]).toBe("c");
+  arr.shift();
+  expect(arr.length).toBe(1);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe(undefined);
+  arr.push("d", "e");
+  expect(arr.length).toBe(3);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe("d");
+  expect(arr[2]).toBe("e");
+  arr.push("f", "g");
+  expect(arr.length).toBe(5);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe("d");
+  expect(arr[2]).toBe("e");
+  expect(arr[3]).toBe("f");
+  expect(arr[4]).toBe("g");
+  arr.deleteLocation();
+  expect(arr.length).toBe(5);
+});
+
+test("DiskArray with location, no size", () => {
+  rimraf.sync(storagepath);
+
+  const arr = new DiskArray(storagepath);
+  expect(!!fs.existsSync(storagepath)).toBe(true);
+  expect(!!fs.existsSync(`${storagepath}/data`)).toBe(false);
+  expect(arr.length).toBe(0);
+  arr.push("a", "b", "c");
+  expect(!!fs.existsSync(`${storagepath}/data`)).toBe(true);
+  expect(arr.length).toBe(3);
+  expect(arr[1]).toBe("b");
+  expect(arr[2]).toBe("c");
+  expect(inspectfile()).toStrictEqual(["a", "b", "c"]);
+  arr.shift();
+  expect(arr.length).toBe(2);
+  expect(arr[0]).toBe("b");
+  expect(arr[1]).toBe("c");
+  expect(inspectfile()).toStrictEqual(["b", "c"]);
+  arr.shift();
+  expect(arr.length).toBe(1);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe(undefined);
+  expect(inspectfile()).toStrictEqual(["c"]);
+  arr.push("d", "e");
+  expect(arr.length).toBe(3);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe("d");
+  expect(arr[2]).toBe("e");
+  expect(inspectfile()).toStrictEqual(["c", "d", "e"]);
+  arr.push("f", "g");
+  expect(arr.length).toBe(5);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe("d");
+  expect(arr[2]).toBe("e");
+  expect(arr[3]).toBe("f");
+  expect(arr[4]).toBe("g");
+  expect(inspectfile()).toStrictEqual(["c", "d", "e", "f", "g"]);
+  arr.deleteLocation();
+  expect(!!fs.existsSync(`${storagepath}`)).toBe(false);
+  expect(arr.length).toBe(5);
+});
+
+test("DiskArray with location, with size", () => {
+  rimraf.sync(storagepath);
+
+  const arr = new DiskArray(storagepath, 50);
+  expect(!!fs.existsSync(storagepath)).toBe(true);
+  expect(!!fs.existsSync(`${storagepath}/data`)).toBe(false);
+  expect(arr.length).toBe(0);
+  arr.push("a", "b", "c");
+  expect(!!fs.existsSync(`${storagepath}/data`)).toBe(true);
+  expect(arr.length).toBe(3);
+  expect(arr[1]).toBe("b");
+  expect(arr[2]).toBe("c");
+  expect(inspectfile()).toStrictEqual(["a", "b", "c"]);
+  arr.shift();
+  expect(arr.length).toBe(2);
+  expect(arr[0]).toBe("b");
+  expect(arr[1]).toBe("c");
+  expect(inspectfile()).toStrictEqual(["b", "c"]);
+  arr.shift();
+  expect(arr.length).toBe(1);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe(undefined);
+  expect(inspectfile()).toStrictEqual(["c"]);
+  arr.push("d", "e");
+  expect(arr.length).toBe(3);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe("d");
+  expect(arr[2]).toBe("e");
+  expect(inspectfile()).toStrictEqual(["c", "d", "e"]);
+  arr.push("f", "g");
+  expect(arr.length).toBe(5);
+  expect(arr[0]).toBe("c");
+  expect(arr[1]).toBe("d");
+  expect(arr[2]).toBe("e");
+  expect(arr[3]).toBe("f");
+  expect(arr[4]).toBe("g");
+  expect(inspectfile()).toStrictEqual(["c", "d", "e", "f", "g"]);
+  arr.deleteLocation();
+  expect(!!fs.existsSync(`${storagepath}`)).toBe(false);
+  expect(arr.length).toBe(5);
+  arr.deleteLocation();
+});
+
+test("smoke test Array specs still work", () => {
+  rimraf.sync(storagepath);
+
+  const arr = new DiskArray(storagepath, 50);
+  arr.push("a", "b", "c", "d", "e", "f", "g", "h");
+  expect(arr.length).toBe(8);
+  expect(arr.splice(5)).toStrictEqual(["f", "g", "h"]);
+  expect(arr.length).toBe(5);
+  expect(arr[0]).toBe("a");
+  expect(arr[1]).toBe("b");
+  expect(arr[5]).toBe(undefined);
+  expect(arr.slice(3)).toStrictEqual(["d", "e"]);
+  expect(Array.from(arr)).toStrictEqual(["a", "b", "c", "d", "e"]);
+  const arr2 = [...arr];
+  expect(arr2).toStrictEqual(["a", "b", "c", "d", "e"]);
+  arr.deleteLocation();
+});
