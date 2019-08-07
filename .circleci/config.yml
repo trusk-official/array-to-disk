@@ -18,9 +18,7 @@ jobs:
           - v1-dependencies-
 
       - run: npm install
-      # - run:
-      #     name: Run tests
-      #     command: npm test
+      - run: npm test
 
       - save_cache:
           paths:
