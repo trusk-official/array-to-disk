@@ -35,7 +35,7 @@ jobs:
           at: ~/repo
       - run:
           name: Build project
-          command: npm run build
+          command: echo "nothing to do"
       - persist_to_workspace:
           root: ~/repo
           paths: .
