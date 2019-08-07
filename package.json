@@ -1,5 +1,5 @@
 {
-  "name": "array-to-disk",
+  "name": "@trusk/array-to-disk",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
