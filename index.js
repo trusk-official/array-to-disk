@@ -1,4 +1,5 @@
 const { LocalStorage } = require("node-localstorage");
+const { EventEmitter } = require("events");
 
 function ArrayToDisk(location, size) {
   const loc = location ? location.toString() : null;
@@ -17,12 +18,27 @@ function ArrayToDisk(location, size) {
 }
 
 ArrayToDisk.prototype = Object.create(Array.prototype, {
+  setEventEmitter: {
+    value(emitter, errorEvent = "error") {
+      this.emitter = emitter;
+      this.errorEvent = errorEvent;
+    },
+    writable: true,
+    enumerable: true,
+    configurable: true
+  },
   shift: {
     value() {
       if (this.storage) {
         const data = JSON.parse(this.storage.getItem("data") || "[]");
         data.shift();
-        this.storage.setItem("data", JSON.stringify(data));
+        try {
+          this.storage.setItem("data", JSON.stringify(data));
+        } catch (e) {
+          if (this.emitter instanceof EventEmitter) {
+            this.emitter.emit(this.errorEvent, e);
+          }
+        }
       }
       return this.length ? this.splice(0, 1)[0] : undefined;
     },
@@ -38,7 +54,13 @@ ArrayToDisk.prototype = Object.create(Array.prototype, {
         for (k; k < args.length; k += 1) {
           data.push(args[k]);
         }
-        this.storage.setItem("data", JSON.stringify(data));
+        try {
+          this.storage.setItem("data", JSON.stringify(data));
+        } catch (e) {
+          if (this.emitter instanceof EventEmitter) {
+            this.emitter.emit(this.errorEvent, e);
+          }
+        }
       }
       let i = 0;
       for (i; i < args.length; i += 1) {
