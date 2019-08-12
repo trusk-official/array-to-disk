@@ -1,5 +1,6 @@
 const fs = require("fs");
 const rimraf = require("rimraf");
+const { EventEmitter } = require("events");
 const DiskArray = require("./../index");
 
 const storagepath = `${__dirname}/tmp`;
@@ -138,4 +139,65 @@ test("smoke test Array specs still work", () => {
   const arr2 = [...arr];
   expect(arr2).toStrictEqual(["a", "b", "c", "d", "e"]);
   arr.deleteLocation();
+});
+
+test("catch emitted error if storage size is exceeded", () => {
+  rimraf.sync(storagepath);
+  const errorsEmitted = [];
+  const storageEmitter = new EventEmitter();
+  storageEmitter.on("customErrorEvent", e => {
+    errorsEmitted.push(e);
+  });
+
+  const arr = new DiskArray(storagepath, 50);
+  arr.setEventEmitter(storageEmitter, "customErrorEvent");
+  for (let k = 0; k < 21; k += 1) {
+    arr.push(k);
+  }
+  expect(errorsEmitted.length).toBe(2);
+  expect(errorsEmitted[0].name).toBe("QUOTA_EXCEEDED_ERR");
+  expect([...arr]).toStrictEqual([
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ]);
+  expect(inspectfile()).toStrictEqual([
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ]);
 });
